@@ -1,0 +1,26 @@
+name: tipbot
+
+services:
+  backend:
+    build:
+      context: /opt/apps/tipbot/backend
+    container_name: tipbot-backend
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8000:8000"
+    networks:
+      - infra
+
+  ml:
+    build:
+      context: /opt/apps/tipbot/ml
+    container_name: tipbot-ml
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8001:8000"
+    networks:
+      - infra
+
+networks:
+  infra:
+    external: true
