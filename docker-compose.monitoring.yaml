@@ -20,7 +20,7 @@ services:
       - loki
     volumes:
       - grafana-dev-data:/var/lib/grafana
-      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana:/etc/grafana
     networks:
       - monitoring
     restart: unless-stopped
