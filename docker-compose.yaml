@@ -10,6 +10,7 @@ services:
       - "127.0.0.1:8000:8000"
     networks:
       - infra
+      - monitoring    
 
   ml:
     build:
@@ -20,7 +21,10 @@ services:
       - "127.0.0.1:8001:8000"
     networks:
       - infra
+      - monitoring   
 
 networks:
   infra:
+    external: true
+  monitoring:          
     external: true

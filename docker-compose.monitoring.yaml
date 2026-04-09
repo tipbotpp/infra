@@ -20,7 +20,7 @@ services:
       - loki
     volumes:
       - grafana-dev-data:/var/lib/grafana
-      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana:/etc/grafana
     networks:
       - monitoring
     restart: unless-stopped
@@ -42,7 +42,9 @@ services:
     image: grafana/promtail:latest
     container_name: promtail-dev
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/run/docker.sock:/var/run/docker.sock:ro       
+      - /var/log:/var/log:ro                               
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro  
       - ./promtail-config.yaml:/etc/promtail/config.yml:ro
       - promtail-positions:/tmp
     command: -config.file=/etc/promtail/config.yml
@@ -54,7 +56,7 @@ services:
 
 networks:
   monitoring:
-    driver: bridge
+    external: true   
 
 volumes:
   grafana-dev-data:
