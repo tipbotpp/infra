@@ -10,7 +10,20 @@ services:
       - "127.0.0.1:8000:8000"
     networks:
       - infra
-      - monitoring    
+      - monitoring
+
+  worker:
+    build:
+      context: /opt/apps/tipbot/backend
+    container_name: tipbot-worker
+    command: arq src.worker.WorkerSettings
+    restart: unless-stopped
+    stop_grace_period: 60s
+    healthcheck:
+      disable: true
+    networks:
+      - infra
+      - monitoring
 
   ml:
     build:
@@ -21,10 +34,10 @@ services:
       - "127.0.0.1:8001:8000"
     networks:
       - infra
-      - monitoring   
+      - monitoring
 
 networks:
   infra:
     external: true
-  monitoring:          
+  monitoring:
     external: true
