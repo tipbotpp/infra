@@ -1,0 +1,98 @@
+name: Pull and Deploy to Dev (Infra)
+
+on:
+  push:
+    branches:
+      - dev
+  workflow_dispatch:
+
+jobs:
+  run_pull:
+    name: Run Pull
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Notify Start
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_TO }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          format: markdown
+          message: |
+            🏗️ **Запуск деплоя инфраструктуры на dev-окружение**
+            Репозиторий: `${{ github.repository }}`
+            Ветка: `${{ github.ref }}`
+            Автор: `${{ github.actor }}`
+            Коммит: `${{ github.event.head_commit.message }}`
+            🔗 [Открыть коммит](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
+
+      - name: Install SSH keys
+        uses: webfactory/ssh-agent@v0.9.1
+        with:
+          ssh-private-key: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
+
+      - name: Add known hosts
+        run: ssh-keyscan -p ${{ secrets.DEV_SSH_PORT }} -H ${{ secrets.DEV_SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to server
+        run: |
+          ssh -p ${{ secrets.DEV_SSH_PORT }} ${{ secrets.DEV_SSH_USER }}@${{ secrets.DEV_SSH_HOST }} << 'EOF'
+            set -e
+            cd /opt/infra || { echo "❌ Directory /opt/infra not found"; exit 1; }
+            
+            echo "📦 Pulling latest changes..."
+            git pull origin dev
+            
+            echo "🔧 Creating .env file..."
+            rm -f .env
+            touch .env
+            echo 'APP_PORT=${{ secrets.INFRA_APP_PORT }}' >> .env
+            echo 'APP_HOST=${{ secrets.INFRA_APP_HOST }}' >> .env
+            echo 'DB_HOST=${{ secrets.INFRA_DB_HOST }}' >> .env
+            echo 'DB_PORT=${{ secrets.INFRA_DB_PORT }}' >> .env
+            echo 'DB_NAME=${{ secrets.INFRA_DB_NAME }}' >> .env
+            echo 'DB_USER=${{ secrets.INFRA_DB_USER }}' >> .env
+            echo 'DB_PASSWORD=${{ secrets.INFRA_DB_PASSWORD }}' >> .env
+            echo 'REDIS_HOST=${{ secrets.INFRA_REDIS_HOST }}' >> .env
+            echo 'REDIS_PORT=${{ secrets.INFRA_REDIS_PORT }}' >> .env
+            echo 'REDIS_PASSWORD=${{ secrets.INFRA_REDIS_PASSWORD }}' >> .env
+            echo 'API_KEY=${{ secrets.INFRA_API_KEY }}' >> .env
+            echo 'JWT_SECRET=${{ secrets.INFRA_JWT_SECRET }}' >> .env
+            echo 'LOG_LEVEL=${{ secrets.INFRA_LOG_LEVEL }}' >> .env
+            
+            echo "🛑 Stopping old containers..."
+            docker compose down || true
+            
+            echo "🏗️ Building and starting..."
+            docker compose up -d --build
+            
+            echo "✅ Deployment completed!"
+          EOF
+
+      - name: Notify Success
+        if: success()
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_TO }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          format: markdown
+          message: |
+            ✅ **Деплой инфраструктуры на dev-окружение завершён успешно**
+            🔗 [Workflow](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+      - name: Notify Failure
+        if: failure()
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_TO }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          format: markdown
+          message: |
+            ❌ **Ошибка при деплое инфраструктуры на dev-окружение**
+            Репозиторий: `${{ github.repository }}`
+            Ветка: `${{ github.ref }}`
+            🔗 [Workflow](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            
+      - name: Cleanup
+        if: always()
+        run: rm -rf ~/.ssh
