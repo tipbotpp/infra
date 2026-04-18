@@ -38,33 +38,13 @@ jobs:
         run: |
           ssh -p ${{ secrets.DEV_SSH_PORT }} ${{ secrets.DEV_SSH_USER }}@${{ secrets.DEV_SSH_HOST }} << 'EOF'
             set -e
-            cd /opt/infra || { echo "❌ Directory /opt/infra not found"; exit 1; }
-            
-            echo "📦 Pulling latest changes..."
-            git pull origin dev
-            
-            echo "🔧 Creating .env file..."
-            rm -f .env
-            touch .env
-            echo 'APP_PORT=${{ secrets.INFRA_APP_PORT }}' >> .env
-            echo 'APP_HOST=${{ secrets.INFRA_APP_HOST }}' >> .env
-            echo 'DB_HOST=${{ secrets.INFRA_DB_HOST }}' >> .env
-            echo 'DB_PORT=${{ secrets.INFRA_DB_PORT }}' >> .env
-            echo 'DB_NAME=${{ secrets.INFRA_DB_NAME }}' >> .env
-            echo 'DB_USER=${{ secrets.INFRA_DB_USER }}' >> .env
-            echo 'DB_PASSWORD=${{ secrets.INFRA_DB_PASSWORD }}' >> .env
-            echo 'REDIS_HOST=${{ secrets.INFRA_REDIS_HOST }}' >> .env
-            echo 'REDIS_PORT=${{ secrets.INFRA_REDIS_PORT }}' >> .env
-            echo 'REDIS_PASSWORD=${{ secrets.INFRA_REDIS_PASSWORD }}' >> .env
-            echo 'API_KEY=${{ secrets.INFRA_API_KEY }}' >> .env
-            echo 'JWT_SECRET=${{ secrets.INFRA_JWT_SECRET }}' >> .env
-            echo 'LOG_LEVEL=${{ secrets.INFRA_LOG_LEVEL }}' >> .env
-            
-            echo "🛑 Stopping old containers..."
-            docker compose down || true
-            
-            echo "🏗️ Building and starting..."
-            docker compose up -d --build
+            cd ${{ secrets.INFRA_DEPLOY_PATH }} || { echo "❌ Directory not found"; exit 1; }
+
+            echo "🛑 Stopping old containers..." 
+           docker compose -f docker-compose.monitoring.yaml down || true
+
+           echo "🏗️ Building and starting monitoring stack..."
+           docker compose -f docker-compose.monitoring.yaml up -d --build
             
             echo "✅ Deployment completed!"
           EOF
