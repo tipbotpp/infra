@@ -43,6 +43,9 @@ jobs:
             echo "🛑 Stopping old containers..." 
            docker compose -f docker-compose.monitoring.yaml down || true
 
+           echo "🔄 Pulling latest changes with rebase..."
+           git pull --rebase
+
            echo "🏗️ Building and starting monitoring stack..."
            docker compose -f docker-compose.monitoring.yaml up -d --build
             
