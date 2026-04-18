@@ -7,7 +7,7 @@ services:
     container_name: tipbot-backend
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8000:8000"
+      - "127.0.0.1:8005:8000"
     networks:
       - infra
       - monitoring
@@ -31,7 +31,7 @@ services:
     container_name: tipbot-ml
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8001:8000"
+      - "127.0.0.1:8002:8000"
     networks:
       - infra
       - monitoring
