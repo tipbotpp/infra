@@ -36,20 +36,20 @@ jobs:
 
       - name: Deploy to server
         run: |
-          ssh -p ${{ secrets.DEV_SSH_PORT }} ${{ secrets.DEV_SSH_USER }}@${{ secrets.DEV_SSH_HOST }} << 'EOF'
+          ssh -A -p ${{ secrets.DEV_SSH_PORT }} ${{ secrets.DEV_SSH_USER }}@${{ secrets.DEV_SSH_HOST }} << 'EOF'
             set -e
             cd ${{ secrets.INFRA_DEPLOY_PATH }} || { echo "❌ Directory not found"; exit 1; }
 
+            echo "🔄 Pulling latest changes with rebase..."
+            git pull --rebase
+
             echo "🛑 Stopping old containers..." 
-           docker compose -f docker-compose.monitoring.yaml down || true
+            docker compose -f docker-compose.monitoring.yaml down || true
 
-           echo "🔄 Pulling latest changes with rebase..."
-           git pull --rebase
-
-           echo "🏗️ Building and starting monitoring stack..."
-           docker compose -f docker-compose.monitoring.yaml up -d --build
+            echo "🏗️ Building and starting monitoring stack..."
+            docker compose -f docker-compose.monitoring.yaml up -d --build
             
-            echo "✅ Deployment completed!"
+           echo "✅ Deployment completed!"
           EOF
 
       - name: Notify Success
