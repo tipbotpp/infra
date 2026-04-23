@@ -32,6 +32,8 @@ services:
     restart: unless-stopped
     ports:
       - "127.0.0.1:8001:8000"
+    volumes:
+      - tipbot-ml-models:/app/models_cache
     networks:
       - infra
       - monitoring
@@ -41,3 +43,6 @@ networks:
     external: true
   monitoring:
     external: true
+
+volumes:
+  tipbot-ml-models:
